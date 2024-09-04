@@ -1,0 +1,101 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+void toUpperCase(char str[]) {
+    for (int i = 0; str[i] != '\0'; i++) {
+        str[i] = toupper(str[i]);
+    }
+}
+
+void generateKeyTable(char key[], char keyTable[SIZE][SIZE]) {
+    int alphabets[26] = {0};
+    int k = 0;
+
+    for (int i = 0; key[i] != '\0'; i++) {
+        if (key[i] == 'J') key[i] = 'I';  // Treat 'I' and 'J' as the same
+        if (!alphabets[key[i] - 'A']) {
+            keyTable[k / SIZE][k % SIZE] = key[i];
+            alphabets[key[i] - 'A'] = 1;
+            k++;
+        }
+    }
+
+    for (char ch = 'A'; ch <= 'Z'; ch++) {
+        if (ch == 'J') continue;
+        if (!alphabets[ch - 'A']) {
+            keyTable[k / SIZE][k % SIZE] = ch;
+            k++;
+        }
+    }
+}
+
+void findPosition(char keyTable[SIZE][SIZE], char ch, int *row, int *col) {
+    if (ch == 'J') ch = 'I';
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (keyTable[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+void encryptPair(char keyTable[SIZE][SIZE], char a, char b, char* cipherText, int* pos) {
+    int row1, col1, row2, col2;
+    findPosition(keyTable, a, &row1, &col1);
+    findPosition(keyTable, b, &row2, &col2);
+
+    if (row1 == row2) {
+        cipherText[(*pos)++] = keyTable[row1][(col1 + 1) % SIZE];
+        cipherText[(*pos)++] = keyTable[row2][(col2 + 1) % SIZE];
+    } else if (col1 == col2) {
+        cipherText[(*pos)++] = keyTable[(row1 + 1) % SIZE][col1];
+        cipherText[(*pos)++] = keyTable[(row2 + 1) % SIZE][col2];
+    } else {
+        cipherText[(*pos)++] = keyTable[row1][col2];
+        cipherText[(*pos)++] = keyTable[row2][col1];
+    }
+}
+
+void playfairEncrypt(char key[], char plainText[], char cipherText[]) {
+    char keyTable[SIZE][SIZE];
+    int pos = 0;
+
+    generateKeyTable(key, keyTable);
+
+    for (int i = 0; plainText[i] != '\0'; i += 2) {
+        char a = plainText[i];
+        char b = (plainText[i + 1] != '\0') ? plainText[i + 1] : 'X';
+
+        if (a == b) b = 'X';
+
+        encryptPair(keyTable, a, b, cipherText, &pos);
+    }
+    cipherText[pos] = '\0';  // Null-terminate the ciphertext
+}
+
+int main() {
+    char key[26], plainText[100], cipherText[100];
+
+    printf("Enter the keyword: ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';  // Remove newline
+
+    printf("Enter the plaintext: ");
+    fgets(plainText, sizeof(plainText), stdin);
+    plainText[strcspn(plainText, "\n")] = '\0';  // Remove newline
+
+    toUpperCase(key);
+    toUpperCase(plainText);
+
+    playfairEncrypt(key, plainText, cipherText);
+
+    printf("Encrypted text: %s\n", cipherText);
+
+    return 0;
+}
