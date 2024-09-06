@@ -1,0 +1,88 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+char playfairMatrix[5][5] = {
+    {'M', 'F', 'H', 'I', 'K'},
+    {'U', 'N', 'O', 'P', 'Q'},
+    {'Z', 'V', 'W', 'X', 'Y'},
+    {'E', 'L', 'A', 'R', 'G'},
+    {'D', 'S', 'T', 'B', 'C'}
+};
+
+// Function to find position of letter in the Playfair matrix
+void findPosition(char letter, int* row, int* col) {
+    if (letter == 'J') letter = 'I'; 
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            if (playfairMatrix[i][j] == letter) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+
+// Function to encrypt a pair of letters
+void encryptPair(char a, char b) {
+    int row1, col1, row2, col2;
+    findPosition(a, &row1, &col1);
+    findPosition(b, &row2, &col2);
+
+    if (row1 == row2) {
+        // Same row: move right
+        printf("%c%c", playfairMatrix[row1][(col1 + 1) % 5], playfairMatrix[row2][(col2 + 1) % 5]);
+    } else if (col1 == col2) {
+        // Same column: move down
+        printf("%c%c", playfairMatrix[(row1 + 1) % 5][col1], playfairMatrix[(row2 + 1) % 5][col2]);
+    } else {
+        // Rectangle: swap the columns
+        printf("%c%c", playfairMatrix[row1][col2], playfairMatrix[row2][col1]);
+    }
+}
+
+// Function to encrypt the entire message
+void encryptMessage(char* message) {
+    for (int i = 0; i < strlen(message); i += 2) {
+        encryptPair(message[i], message[i + 1]);
+    }
+    printf("\n");
+}
+
+// Function to preprocess the message (removes spaces, converts to uppercase, and handles duplicate letters)
+void preprocessMessage(char* message, char* processedMessage) {
+    int j = 0;
+    for (int i = 0; i < strlen(message); i++) {
+        if (message[i] != ' ') {
+            char upperChar = toupper(message[i]);
+            if (upperChar == 'J') upperChar = 'I'; // Replace J with I
+
+            // If a letter is repeated, add 'X' between them
+            if (j > 0 && processedMessage[j - 1] == upperChar) {
+                processedMessage[j++] = 'X';
+            }
+            processedMessage[j++] = upperChar;
+        }
+    }
+
+    // If the processed message has an odd length, add a filler 'X'
+    if (j % 2 != 0) {
+        processedMessage[j++] = 'X';
+    }
+    processedMessage[j] = '\0'; // Null-terminate the string
+}
+
+int main() {
+    char message[] = "Must see you over Cadogan West Coming at once";
+    char processedMessage[100]; // Ensure the buffer is large enough for the processed message
+
+    preprocessMessage(message, processedMessage);
+
+    printf("Processed Message: %s\n", processedMessage); // Display the processed message
+
+    printf("Encrypted message: ");
+    encryptMessage(processedMessage);
+
+    return 0;
+}
